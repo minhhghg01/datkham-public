@@ -1,0 +1,252 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Booking API",
+    "version": "1.0.0",
+    "description": "API documentation for the Booking application"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/clinic/{id}": {
+      "get": {
+        "summary": "Lấy thông tin chi tiết một phòng khám",
+        "description": "Trả về thông tin của một phòng khám cụ thể dựa trên ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID của phòng khám cần lấy thông tin.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin chi tiết của phòng khám."
+          },
+          "404": {
+            "description": "Không tìm thấy phòng khám."
+          }
+        }
+      },
+      "put": {
+        "summary": "Cập nhật thông tin phòng khám",
+        "description": "Cập nhật tên của một phòng khám cụ thể.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID của phòng khám cần cập nhật.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Tên mới của phòng khám."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật thành công."
+          },
+          "404": {
+            "description": "Không tìm thấy phòng khám hoặc lỗi server."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Xóa một phòng khám",
+        "description": "Xóa một phòng khám khỏi hệ thống dựa trên ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "ID của phòng khám cần xóa.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã xóa phòng khám thành công."
+          },
+          "404": {
+            "description": "Không tìm thấy phòng khám hoặc lỗi server."
+          }
+        }
+      }
+    },
+    "/api/clinic": {
+      "get": {
+        "summary": "Lấy danh sách tất cả các phòng khám",
+        "description": "Trả về một danh sách đầy đủ các phòng khám có trong hệ thống.",
+        "responses": {
+          "200": {
+            "description": "Một mảng JSON chứa danh sách các phòng khám.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "description": "ID của phòng khám."
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Tên của phòng khám."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo một phòng khám mới",
+        "description": "Tạo một phòng khám mới với tên được cung cấp.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Tên của phòng khám mới.",
+                    "example": "Phòng khám Đa khoa Quốc tế"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tạo phòng khám thành công."
+          },
+          "400": {
+            "description": "Thiếu thông tin tên phòng khám."
+          },
+          "500": {
+            "description": "Lỗi từ máy chủ."
+          }
+        }
+      }
+    },
+    "/api/country": {
+      "get": {
+        "summary": "Lấy danh sách quốc gia",
+        "responses": {
+          "200": {
+            "description": "Danh sách quốc gia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ethnic": {
+      "get": {
+        "summary": "Lấy danh sách dân tộc",
+        "responses": {
+          "200": {
+            "description": "Danh sách dân tộc",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/occupation": {
+      "get": {
+        "summary": "Lấy danh sách nghề nghiệp",
+        "responses": {
+          "200": {
+            "description": "Danh sách nghề nghiệp",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}

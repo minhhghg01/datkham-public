@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guest {
+  id           Int         @id @default(autoincrement())
+  name         String
+  dateOfBirth  DateTime
+  gender       String      // "Nam" hoặc "Nữ"
+  phone        String
+  cccd         String
+  address      String
+  countryId    Int
+  occupationId Int
+  ethnicId     Int
+
+  country      Country     @relation(fields: [countryId], references: [id])
+  occupation   Occupation  @relation(fields: [occupationId], references: [id])
+  ethnic       Ethnic      @relation(fields: [ethnicId], references: [id])
+  bookings     Booking[]
+}
+
+model Country {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  guests Guest[]
+}
+
+model Occupation {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  guests Guest[]
+}
+
+model Ethnic {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  guests Guest[]
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  name      String
+  role      String
+  phone     String
+  username  String  @unique
+  password  String
+  createdAt DateTime @default(now())
+  createdBy Int?
+  creator   User?   @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  created   User[]  @relation("UserCreatedBy")
+}
+
+model Clinic {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  bookings  Booking[]
+}
+
+model Booking {
+  id        Int      @id @default(autoincrement())
+  guestId   Int
+  clinicId  Int
+  date      DateTime
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  guest     Guest    @relation(fields: [guestId], references: [id])
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+}
