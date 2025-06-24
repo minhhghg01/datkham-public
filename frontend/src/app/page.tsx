@@ -181,22 +181,56 @@ export default function BookingForm() {
     setError("");
     setResult(null);
     try {
-      setTimeout(() => {
-        setResult({
-          clinicRoom,
-          name,
-          phone,
-          cccd,
-          address,
-          date: selectedDate
-            ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
-            : "",
-          time,
-        });
+      // Chuyển ngày sinh từ DD/MM/YYYY sang YYYY-MM-DD
+      let dob = dateOfBirth;
+      if (dateOfBirth.includes('/')) {
+        const [day, month, year] = dateOfBirth.split('/');
+        dob = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      // Ngày đặt lịch
+      const bookingDate = selectedDate
+        ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+        : "";
+      // Tạo object gửi lên API
+      const data = {
+        clinicRoom: clinicRoom,
+        name,
+        dateOfBirth: dob,
+        gender,
+        phone,
+        cccd,
+        address,
+        countryId,
+        occupationId,
+        ethnicId,
+        date: bookingDate,
+        time,
+      };
+
+      const response = await fetch("http://localhost:4000/api/booking/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        // Hiển thị chi tiết lỗi từ backend
+        setError(result.error || result.detail || "Có lỗi xảy ra khi đăng ký");
+        console.error("Chi tiết lỗi:", result);
         setLoading(false);
-      }, 1000);
+        return;
+      }
+
+      setResult(result);
+      setStep(4);
+      setLoading(false);
     } catch (err: any) {
-      setError("Lỗi đăng ký");
+      console.error("Lỗi khi gọi API:", err);
+      setError(err.message || "Lỗi đăng ký");
       setLoading(false);
     }
   };
@@ -295,7 +329,10 @@ export default function BookingForm() {
   }
   const { morning, afternoon } = splitTimeSlots(timeSlots, minTime);
 
-  const isFormValid = name && phone && cccd && !nameError && !phoneError && !cccdError;
+  const isFormValid = name && phone && cccd && !nameError && !phoneError && !cccdError 
+    && countryId && ethnicId && occupationId  // Thêm validate cho các trường select
+    && gender && dateOfBirth && address       // Thêm validate cho các trường còn lại
+    && !dateOfBirthError && !genderError && !addressError;
 
   // Thêm hàm format ngày sinh
   const formatDateOfBirth = (value: string) => {

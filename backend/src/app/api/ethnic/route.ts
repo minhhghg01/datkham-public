@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
@@ -35,7 +35,7 @@ export async function GET() {
   
   try {
     const ethnics = await prisma.ethnic.findMany();
-    console.log('GET /api/ethnic - Data:', ethnics);
+    // console.log('GET /api/ethnic - Data:', ethnics);
 
     if (!ethnics || ethnics.length === 0) {
       console.log('GET /api/ethnic - No data found');
@@ -59,8 +59,8 @@ export async function GET() {
 }
 
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    status: 200,
-    headers: corsHeaders
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
   });
 } 

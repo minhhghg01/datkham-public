@@ -37,7 +37,7 @@ export async function GET() {
   try {
     console.log("Bắt đầu lấy danh sách phòng khám...");
     const clinics = await prisma.clinic.findMany();
-    console.log("Dữ liệu phòng khám lấy được từ DB:", clinics);
+    // console.log("Dữ liệu phòng khám lấy được từ DB:", clinics);
 
     if (!clinics) {
       console.log("Không tìm thấy phòng khám nào.");
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 }
 
 // Đáp ứng preflight request (OPTIONS)
-export async function OPTIONS() {
+export async function OPTIONS(request: Request) {
   return new Response(null, {
     status: 204,
     headers: CORS_HEADERS,

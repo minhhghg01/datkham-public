@@ -1,40 +1,131 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../generated/prisma';
+import { PrismaClient } from '../../../../generated/prisma'; // hoặc '@prisma/client' nếu bạn dùng đúng chuẩn
 
 const prisma = new PrismaClient();
 
+// Thêm method OPTIONS để xử lý preflight CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': 'http://localhost:3000', // Cho phép frontend truy cập
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { clinicRoom, name, phone, date, time } = await req.json();
-    if (!clinicRoom || !name || !phone || !date || !time) {
-      return NextResponse.json({ error: 'Thiếu thông tin bắt buộc' }, { status: 400 });
+    console.log("Bắt đầu xử lý đăng ký...");
+    const requestData = await req.json();
+    console.log("Dữ liệu nhận được:", requestData);
+
+    const {
+      clinicRoom,
+      name,
+      dateOfBirth,
+      gender,
+      phone,
+      cccd,
+      address,
+      countryId,
+      occupationId,
+      ethnicId,
+      date,
+      time
+    } = requestData;
+
+    // Kiểm tra các trường bắt buộc
+    const requiredFields = {
+      clinicRoom,
+      name,
+      dateOfBirth,
+      gender,
+      phone,
+      cccd,
+      address,
+      countryId,
+      occupationId,
+      ethnicId,
+      date,
+      time
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      console.log("Thiếu các trường:", missingFields);
+      return new NextResponse(JSON.stringify({ 
+        error: 'Thiếu thông tin bắt buộc', 
+        missingFields 
+      }), {
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': 'http://localhost:3000',
+        },
+      });
     }
 
     // Kiểm tra phòng khám tồn tại
+    console.log("Kiểm tra phòng khám:", clinicRoom);
     const clinic = await prisma.clinic.findUnique({ where: { id: clinicRoom } });
     if (!clinic) {
-      return NextResponse.json({ error: 'Phòng khám không tồn tại' }, { status: 404 });
+      console.log("Không tìm thấy phòng khám");
+      return new NextResponse(JSON.stringify({ error: 'Phòng khám không tồn tại' }), {
+        status: 404,
+        headers: {
+          'Access-Control-Allow-Origin': 'http://localhost:3000',
+        },
+      });
     }
 
-    // Tìm hoặc tạo user
-    let user = await prisma.user.findUnique({ where: { phone } });
-    if (!user) {
-      user = await prisma.user.create({ data: { name, phone } });
-    }
-
-    // Tạo booking
+    // Tạo booking mới
+    console.log("Tạo booking mới...");
     const booking = await prisma.booking.create({
       data: {
-        userId: user.id,
         clinicId: clinic.id,
         date: new Date(`${date}T${time}:00`),
+        time,
         status: 'pending',
+        name,
+        dateOfBirth: new Date(dateOfBirth),
+        gender,
+        phone,
+        cccd,
+        address,
+        countryId,
+        occupationId,
+        ethnicId
       },
-      include: { user: true, clinic: true },
+      include: {
+        clinic: true,
+        country: true,
+        occupation: true,
+        ethnic: true
+      },
     });
 
-    return NextResponse.json({ booking });
-  } catch (error) {
-    return NextResponse.json({ error: 'Lỗi server', detail: error?.message }, { status: 500 });
+    console.log("Đăng ký thành công:", booking);
+    return new NextResponse(JSON.stringify({ booking }), {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+      },
+    });
+  } catch (error: any) {
+    console.error("Lỗi server:", error);
+    return new NextResponse(JSON.stringify({ 
+      error: 'Lỗi server', 
+      detail: error?.message,
+      stack: error?.stack
+    }), {
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+      },
+    });
   }
-} 
+}

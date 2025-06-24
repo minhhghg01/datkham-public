@@ -15,40 +15,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Guest {
-  id           Int         @id @default(autoincrement())
-  name         String
-  dateOfBirth  DateTime
-  gender       String      // "Nam" hoặc "Nữ"
-  phone        String
-  cccd         String
-  address      String
-  countryId    Int
-  occupationId Int
-  ethnicId     Int
-
-  country      Country     @relation(fields: [countryId], references: [id])
-  occupation   Occupation  @relation(fields: [occupationId], references: [id])
-  ethnic       Ethnic      @relation(fields: [ethnicId], references: [id])
-  bookings     Booking[]
-}
-
 model Country {
   id     Int     @id @default(autoincrement())
   name   String  @unique
-  guests Guest[]
+  bookings Booking[]
 }
 
 model Occupation {
   id     Int     @id @default(autoincrement())
   name   String  @unique
-  guests Guest[]
+  bookings Booking[]
 }
 
 model Ethnic {
   id     Int     @id @default(autoincrement())
   name   String  @unique
-  guests Guest[]
+  bookings Booking[]
 }
 
 model User {
@@ -73,12 +55,26 @@ model Clinic {
 
 model Booking {
   id        Int      @id @default(autoincrement())
-  guestId   Int
   clinicId  Int
   date      DateTime
+  time      String   // Thêm trường time
   status    String   @default("pending")
   createdAt DateTime @default(now())
 
-  guest     Guest    @relation(fields: [guestId], references: [id])
+  // Thêm các trường từ bảng Guest
+  name         String
+  dateOfBirth  DateTime
+  gender       String      // "Nam" hoặc "Nữ"
+  phone        String
+  cccd         String
+  address      String
+  countryId    Int
+  occupationId Int
+  ethnicId     Int
+
+  // Cập nhật relations
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  country   Country  @relation(fields: [countryId], references: [id])
+  occupation Occupation @relation(fields: [occupationId], references: [id])
+  ethnic    Ethnic   @relation(fields: [ethnicId], references: [id])
 }

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
@@ -14,10 +14,10 @@ const corsHeaders = {
  * @swagger
  * /api/country:
  *   get:
- *     summary: Lấy danh sách quốc gia
+ *     description: Returns the list of countries
  *     responses:
  *       200:
- *         description: Danh sách quốc gia
+ *         description: A list of countries.
  *         content:
  *           application/json:
  *             schema:
@@ -35,7 +35,7 @@ export async function GET() {
   
   try {
     const countries = await prisma.country.findMany();
-    console.log('GET /api/country - Data:', countries);
+    // console.log('GET /api/country - Data:', countries);
 
     if (!countries || countries.length === 0) {
       console.log('GET /api/country - No data found');
@@ -59,8 +59,8 @@ export async function GET() {
 }
 
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    status: 200,
-    headers: corsHeaders
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
   });
 } 

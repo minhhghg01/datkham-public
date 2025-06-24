@@ -6,16 +6,29 @@ const prisma = new PrismaClient();
 
 function findUniqueFromExcel(fileName: any, columnIndex: any) {
   const filePath = path.join(__dirname, fileName);
-  const workbook = XLSX.readFile(filePath);
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
-  const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-  const allNames = data
-    .slice(1)
-    .map((row: any) => row[columnIndex])
-    .filter((name: any) => name && name.toString().trim() !== '')
-    .map((name: any) => name.toString());
-  return [...new Set(allNames)];
+  console.log(`Đang đọc file: ${filePath}`);
+  
+  try {
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    
+    console.log(`Đọc được ${data.length} dòng từ ${fileName}`);
+    
+    const allNames = data
+      .slice(1)
+      .map((row: any) => row[columnIndex])
+      .filter((name: any) => name && name.toString().trim() !== '')
+      .map((name: any) => name.toString());
+      
+    console.log(`Tìm thấy ${allNames.length} tên duy nhất từ cột ${columnIndex} của ${fileName}`);
+    
+    return [...new Set(allNames)];
+  } catch (error) {
+    console.error(`Lỗi khi đọc file ${fileName}:`, error);
+    return [];
+  }
 }
 
 async function main() {
