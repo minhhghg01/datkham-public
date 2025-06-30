@@ -1,11 +1,111 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function BookingManager() {
+  const [bookings, setBookings] = useState([]);
+  const [expandedRows, setExpandedRows] = useState<number[]>([]);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await axios.get("http://localhost:4000/api/booking");
+        setBookings(res.data);
+      } catch (err) {
+        console.error("Failed to fetch bookings:", err);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
+  const toggleRow = (id: number) => {
+    setExpandedRows(prev =>
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    );
+  };
+
   return (
     <div style={{ padding: 32 }}>
-      <h2>Quản lý Booking</h2>
-      <p>Chức năng CRUD booking sẽ hiển thị ở đây.</p>
+      <h2 style={{ marginBottom: 24 }}>Danh sách đặt lịch</h2>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ background: "#f0f0f0" }}>
+            <th style={thStyle}>#</th>
+            <th style={thStyle}>Họ tên</th>
+            <th style={thStyle}>SĐT</th>
+            <th style={thStyle}>Giới tính</th>
+            <th style={thStyle}>Ngày sinh</th>
+            <th style={thStyle}>Phòng khám</th>
+            <th style={thStyle}>Thời gian</th>
+            <th style={thStyle}>Trạng thái</th>
+            <th style={thStyle}>Hành động</th>
+            <th style={thStyle}>Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bookings.map((b: any, index: number) => (
+            <React.Fragment key={b.id}>
+              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+                <td style={tdStyle}>{index + 1}</td>
+                <td style={tdStyle}>{b.name}</td>
+                <td style={tdStyle}>{b.phone}</td>
+                <td style={tdStyle}>{b.gender}</td>
+                <td style={tdStyle}>{new Date(b.dateOfBirth).toLocaleDateString()}</td>
+                <td style={tdStyle}>{b.clinic?.name}</td>
+                <td style={tdStyle}>{`${new Date(b.date).toLocaleDateString()} ${b.time}`}</td>
+                <td style={tdStyle}>{b.status}</td>
+                <td style={tdStyle}>
+                  <button style={actionBtn}>Xem</button>
+                  <button style={{ ...actionBtn, background: '#e74c3c' }}>Hủy</button>
+                </td>
+                <td style={tdStyle}>
+                  <button style={actionBtn} onClick={() => toggleRow(b.id)}>
+                    {expandedRows.includes(b.id) ? "Ẩn" : "Chi tiết"}
+                  </button>
+                </td>
+              </tr>
+              {expandedRows.includes(b.id) && (
+                <tr>
+                  <td style={tdDetail} colSpan={10}>
+                    <div><strong>CCCD:</strong> {b.cccd}</div>
+                    <div><strong>Quốc gia:</strong> {b.country?.name}</div>
+                    <div><strong>Dân tộc:</strong> {b.ethnic?.name}</div>
+                    <div><strong>Nghề nghiệp:</strong> {b.occupation?.name}</div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-} 
+}
+
+const thStyle = {
+  textAlign: "left" as const,
+  padding: "12px 16px",
+  borderBottom: "2px solid #ccc",
+};
+
+const tdStyle = {
+  padding: "12px 16px",
+};
+
+const tdDetail = {
+  padding: "12px 16px",
+  backgroundColor: "#f9f9f9",
+  fontSize: "14px",
+  lineHeight: "1.6",
+};
+
+const actionBtn = {
+  background: "#3498db",
+  color: "white",
+  border: "none",
+  padding: "6px 12px",
+  marginRight: 8,
+  borderRadius: 4,
+  cursor: "pointer",
+};

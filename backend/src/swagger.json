@@ -245,6 +245,70 @@
           }
         }
       }
+    },
+    "/api/booking": {
+      "get": {
+        "summary": "Lấy danh sách tất cả booking",
+        "description": "Trả về danh sách tất cả các booking, bao gồm thông tin phòng khám, quốc gia, nghề nghiệp, dân tộc.",
+        "responses": {
+          "200": {
+            "description": "Danh sách booking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" },
+                      "dateOfBirth": { "type": "string", "format": "date-time" },
+                      "gender": { "type": "string" },
+                      "phone": { "type": "string" },
+                      "cccd": { "type": "string" },
+                      "address": { "type": "string" },
+                      "date": { "type": "string", "format": "date-time" },
+                      "time": { "type": "string" },
+                      "status": { "type": "string" },
+                      "clinic": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "country": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "occupation": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "ethnic": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi server"
+          }
+        }
+      }
     }
   },
   "components": {},
