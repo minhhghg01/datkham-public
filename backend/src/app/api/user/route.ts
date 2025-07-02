@@ -31,9 +31,12 @@ export async function POST(req: NextRequest) {
     if (!data.name || !data.username || !data.phone || !data.role || !data.password) {
       return withCORS(NextResponse.json({ error: "Thiếu thông tin bắt buộc." }, { status: 400 }));
     }
+    // Xóa trường id nếu có
+    if ('id' in data) delete data.id;
     const user = await prisma.user.create({ data });
     return withCORS(NextResponse.json(user));
   } catch (err: any) {
+    console.error("Lỗi khi tạo user:", err); // Log lỗi ra terminal
     // Lỗi unique hoặc lỗi khác
     if (err.code === 'P2002') {
       return withCORS(NextResponse.json({ error: "Tên đăng nhập đã tồn tại." }, { status: 400 }));
