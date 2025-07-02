@@ -6,6 +6,47 @@ export default function BookingManager() {
   const [bookings, setBookings] = useState([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
 
+  const getStatusLabel = (status: string) => {
+    let label = "";
+    let color = "";
+  
+    switch (status) {
+      case "pending":
+        label = "Đang chờ";
+        color = "#f1c40f"; // vàng
+        break;
+      case "done":
+        label = "Hoàn thành";
+        color = "#2ecc71"; // xanh lá
+        break;
+      case "deleted":
+        label = "Đã hủy";
+        color = "#e74c3c"; // đỏ
+        break;
+      default:
+        label = status;
+        color = "#bdc3c7"; // xám
+    }
+  
+    return (
+      <span
+        style={{
+          backgroundColor: color,
+          color: "white",
+          padding: "4px 8px",
+          borderRadius: "12px",
+          fontSize: "13px",
+          fontWeight: 500,
+          display: "inline-block",
+          minWidth: "80px",
+          textAlign: "center",
+        }}
+      >
+        {label}
+      </span>
+    );
+  };    
+
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
       await axios.put(`http://localhost:4000/api/booking/${id}`, {
@@ -69,7 +110,7 @@ export default function BookingManager() {
                 <td style={tdStyle}>{new Date(b.dateOfBirth).toLocaleDateString()}</td>
                 <td style={tdStyle}>{b.clinic?.name}</td>
                 <td style={tdStyle}>{`${new Date(b.date).toLocaleDateString()} ${b.time}`}</td>
-                <td style={tdStyle}>{b.status}</td>
+                <td style={tdStyle}>{getStatusLabel(b.status)}</td>
                 <td style={tdStyle}>
                 <button style={actionBtn} onClick={() => handleUpdateStatus(b.id, 'done')}>
                   Xác nhận

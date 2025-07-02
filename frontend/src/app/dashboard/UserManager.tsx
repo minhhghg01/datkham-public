@@ -14,12 +14,12 @@ interface User {
 export default function UserManager() {
   const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState<Omit<User, "id"> & { id: number | null }>({
+  const [formData, setFormData] = useState<any>({
     id: null,
     name: "",
-    username: "",
+    user_name: "",
     phone: "",
-    password: "",
+    user_password: "",
     role: "user",
   });
   const [isEdit, setIsEdit] = useState(false);
@@ -51,10 +51,10 @@ export default function UserManager() {
   }, [formData.name]);
 
   useEffect(() => {
-    if (!formData.username.trim()) setUsernameError("Tên đăng nhập không được để trống");
-    else if (formData.username.length < 8) setUsernameError("Tên đăng nhập phải từ 8 ký tự");
+    if (!formData.user_name.trim()) setUsernameError("Tên đăng nhập không được để trống");
+    else if (formData.user_name.length < 8) setUsernameError("Tên đăng nhập phải từ 8 ký tự");
     else setUsernameError("");
-  }, [formData.username]);
+  }, [formData.user_name]);
 
   useEffect(() => {
     if (!formData.phone.trim()) setPhoneError("Số điện thoại không được để trống");
@@ -63,10 +63,10 @@ export default function UserManager() {
   }, [formData.phone]);
 
   useEffect(() => {
-    if (!isEdit && !(formData.password ?? "").trim()) setPasswordError("Mật khẩu không được để trống");
-    else if (!isEdit && (formData.password ?? "").length < 8) setPasswordError("Mật khẩu phải từ 8 ký tự");
+    if (!isEdit && !(formData.user_password ?? "").trim()) setPasswordError("Mật khẩu không được để trống");
+    else if (!isEdit && (formData.user_password ?? "").length < 8) setPasswordError("Mật khẩu phải từ 8 ký tự");
     else setPasswordError("");
-  }, [formData.password, isEdit]);
+  }, [formData.user_password, isEdit]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -77,14 +77,21 @@ export default function UserManager() {
   };
 
   const handleAddUser = () => {
-    setFormData({ id: null, name: "", username: "", phone: "", password: "", role: "user" });
+    setFormData({ id: null, name: "", user_name: "", phone: "", user_password: "", role: "user" });
     setIsEdit(false);
     setTouched({});
     setShowForm(true);
   };
 
   const handleEditUser = (user: User) => {
-    setFormData({ ...user, password: "" });
+    setFormData({
+      id: user.id,
+      name: user.name,
+      user_name: user.username,
+      phone: user.phone,
+      user_password: user.password ?? "",
+      role: user.role,
+    });
     setIsEdit(true);
     setTouched({});
     setShowForm(true);
@@ -102,13 +109,21 @@ export default function UserManager() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setTouched({ name: true, username: true, phone: true, password: true });
+    setTouched({ name: true, user_name: true, phone: true, user_password: true });
     if (nameError || usernameError || phoneError || passwordError) return;
     try {
+      const submitData = {
+        id: formData.id,
+        name: formData.name,
+        username: formData.user_name,
+        phone: formData.phone,
+        password: formData.user_password,
+        role: formData.role,
+      };
       if (isEdit) {
-        await axios.put("http://localhost:4000/api/user", { ...formData });
+        await axios.put("http://localhost:4000/api/user", submitData);
       } else {
-        await axios.post("http://localhost:4000/api/user", formData);
+        await axios.post("http://localhost:4000/api/user", submitData);
       }
       setShowForm(false);
       fetchUsers();
@@ -129,7 +144,7 @@ export default function UserManager() {
             <th style={thStyle}>#</th>
             <th style={thStyle}>Họ tên</th>
             <th style={thStyle}>Tên đăng nhập</th>
-            <th style={thStyle}>Mật khẩu</th>
+            {/* <th style={thStyle}>Mật khẩu</th> */}
             <th style={thStyle}>SĐT</th>
             <th style={thStyle}>Vai trò</th>
             <th style={thStyle}>Hành động</th>
@@ -141,7 +156,7 @@ export default function UserManager() {
               <td style={tdStyle}>{idx + 1}</td>
               <td style={tdStyle}>{u.name}</td>
               <td style={tdStyle}>{u.username}</td>
-              <td style={tdStyle}>{u.password}</td>
+              {/* <td style={tdStyle}>{u.password}</td> */}
               <td style={tdStyle}>{u.phone}</td>
               <td style={tdStyle}>{u.role}</td>
               <td style={tdStyle}>
@@ -154,7 +169,7 @@ export default function UserManager() {
       </table>
       {showForm && (
         <div style={modalStyle}>
-          <form style={formStyle2} onSubmit={handleSubmit}>
+          <form style={formStyle2} onSubmit={handleSubmit} autoComplete="off">
             <h3 style={{ marginBottom: 24 }}>{isEdit ? "Sửa tài khoản" : "Thêm tài khoản"}</h3>
             <div style={formGroup}>
               <label style={labelStyle}>Họ tên</label>
@@ -172,15 +187,15 @@ export default function UserManager() {
             <div style={formGroup}>
               <label style={labelStyle}>Tên đăng nhập</label>
               <input
-                name="username"
-                value={formData.username}
+                name="user_name"
+                value={formData.user_name}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                style={inputStyle(!!(usernameError && touched.username))}
+                style={inputStyle(!!(usernameError && touched.user_name))}
                 autoComplete="off"
                 required
               />
-              {usernameError && touched.username && <div style={errorStyle}>{usernameError}</div>}
+              {usernameError && touched.user_name && <div style={errorStyle}>{usernameError}</div>}
             </div>
             <div style={formGroup}>
               <label style={labelStyle}>Số điện thoại</label>
@@ -198,16 +213,16 @@ export default function UserManager() {
             <div style={formGroup}>
               <label style={labelStyle}>Mật khẩu</label>
               <input
-                name="password"
+                name="user_password"
                 type="password"
-                value={formData.password ?? ""}
+                value={formData.user_password ?? ""}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                style={inputStyle(!!(passwordError && touched.password))}
-                autoComplete="off"
+                style={inputStyle(!!(passwordError && touched.user_password))}
+                autoComplete="new-password"
                 required={!isEdit}
               />
-              {passwordError && touched.password && <div style={errorStyle}>{passwordError}</div>}
+              {passwordError && touched.user_password && <div style={errorStyle}>{passwordError}</div>}
             </div>
             <div style={formGroup}>
               <label style={labelStyle}>Quyền</label>
