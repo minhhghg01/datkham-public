@@ -309,8 +309,112 @@
           }
         }
       }
+    },
+    "/api/user": {
+      "get": {
+        "summary": "Lấy danh sách user",
+        "responses": {
+          "200": {
+            "description": "Danh sách user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Tạo user mới",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Tạo user thành công" },
+          "400": { "description": "Mật khẩu không hợp lệ: phải có ít nhất 1 chữ cái in hoa, 1 ký tự đặc biệt, có cả chữ và số, tối thiểu 8 ký tự." }
+        }
+      },
+      "put": {
+        "summary": "Cập nhật user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cập nhật user thành công" },
+          "400": { "description": "Mật khẩu không hợp lệ: phải có ít nhất 1 chữ cái in hoa, 1 ký tự đặc biệt, có cả chữ và số, tối thiểu 8 ký tự." }
+        }
+      },
+      "delete": {
+        "summary": "Xóa user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "integer" }
+                },
+                "required": ["id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Xóa user thành công" }
+        }
+      }
     }
   },
-  "components": {},
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "username": { "type": "string" },
+          "phone": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      },
+      "UserInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "username": { "type": "string" },
+          "phone": { "type": "string" },
+          "password": { "type": "string", "description": "Mật khẩu phải có ít nhất 1 chữ cái in hoa, 1 ký tự đặc biệt, có cả chữ và số, tối thiểu 8 ký tự." },
+          "role": { "type": "string" }
+        },
+        "required": ["name", "username", "phone", "password", "role"]
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "username": { "type": "string" },
+          "phone": { "type": "string" },
+          "password": { "type": "string", "description": "Mật khẩu phải có ít nhất 1 chữ cái in hoa, 1 ký tự đặc biệt, có cả chữ và số, tối thiểu 8 ký tự." },
+          "role": { "type": "string" }
+        },
+        "required": ["id"]
+      }
+    }
+  },
   "tags": []
 }

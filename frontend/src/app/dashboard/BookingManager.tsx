@@ -6,6 +6,21 @@ export default function BookingManager() {
   const [bookings, setBookings] = useState([]);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
 
+  const handleUpdateStatus = async (id: number, newStatus: string) => {
+    try {
+      await axios.put(`http://localhost:4000/api/booking/${id}`, {
+        status: newStatus,
+      });
+  
+      // Cập nhật lại danh sách bookings sau khi thay đổi
+      setBookings(prev =>
+        prev.map(b => (b.id === id ? { ...b, status: newStatus } : b))
+      );
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+    }
+  };  
+
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -56,8 +71,15 @@ export default function BookingManager() {
                 <td style={tdStyle}>{`${new Date(b.date).toLocaleDateString()} ${b.time}`}</td>
                 <td style={tdStyle}>{b.status}</td>
                 <td style={tdStyle}>
-                  <button style={actionBtn}>Xem</button>
-                  <button style={{ ...actionBtn, background: '#e74c3c' }}>Hủy</button>
+                <button style={actionBtn} onClick={() => handleUpdateStatus(b.id, 'done')}>
+                  Xác nhận
+                </button>
+                <button
+                  style={{ ...actionBtn, background: '#e74c3c' }}
+                  onClick={() => handleUpdateStatus(b.id, 'deleted')}
+                >
+                  Xóa
+                </button>
                 </td>
                 <td style={tdStyle}>
                   <button style={actionBtn} onClick={() => toggleRow(b.id)}>
