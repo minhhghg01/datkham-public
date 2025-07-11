@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -35,12 +36,24 @@ export default function LoginPage() {
     if (!validateForm()) return;
     setLoading(true);
     setError("");
-    // Gọi API đăng nhập ở đây nếu cần
-    setTimeout(() => {
+    try {
+      const res = await axios.post("http://localhost:4000/api/user/login", {
+        username,
+        password,
+      });
+      const { token, role } = res.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
       setLoading(false);
-      // Nếu đăng nhập thành công:
       router.push("/dashboard");
-    }, 1000);
+    } catch (err: any) {
+      setLoading(false);
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(err.response.data.error);
+      } else {
+        setError("Đăng nhập thất bại. Vui lòng thử lại.");
+      }
+    }
   };
 
   return (

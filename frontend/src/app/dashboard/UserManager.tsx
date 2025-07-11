@@ -11,7 +11,11 @@ interface User {
   role: string;
 }
 
-export default function UserManager() {
+interface UserManagerProps {
+  role?: string;
+}
+
+export default function UserManager({ role }: UserManagerProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<any>({
@@ -33,7 +37,10 @@ export default function UserManager() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/user");
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await axios.get("http://localhost:4000/api/user", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       setUsers(res.data);
     } catch (err) {
       alert("Không thể tải danh sách user!");
@@ -100,7 +107,11 @@ export default function UserManager() {
   const handleDeleteUser = async (id: number) => {
     if (!window.confirm("Bạn có chắc muốn xóa user này?")) return;
     try {
-      await axios.delete("http://localhost:4000/api/user", { data: { id } });
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      await axios.delete("http://localhost:4000/api/user", {
+        data: { id },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       fetchUsers();
     } catch (err) {
       alert("Xóa user thất bại!");
@@ -120,12 +131,19 @@ export default function UserManager() {
         password: formData.user_password,
         role: formData.role,
       };
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (isEdit) {
-        await axios.put("http://localhost:4000/api/user", submitData);
+        await axios.put("http://localhost:4000/api/user", submitData, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
       } else {
-        await axios.post("http://localhost:4000/api/user", submitData);
+        await axios.post("http://localhost:4000/api/user", submitData, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
       }
       setShowForm(false);
+      setFormData({ id: null, name: "", user_name: "", phone: "", user_password: "", role: "user" }); // clear form
+      setTouched({});
       fetchUsers();
     } catch (err) {
       alert("Lưu user thất bại!");
@@ -182,7 +200,7 @@ export default function UserManager() {
                 autoComplete="off"
                 required
               />
-              {nameError && touched.name && <div style={errorStyle}>{nameError}</div>}
+              {nameError && touched.name && <div style={{ color: 'red' }}>{nameError}</div>}
             </div>
             <div style={formGroup}>
               <label style={labelStyle}>Tên đăng nhập</label>
@@ -195,10 +213,10 @@ export default function UserManager() {
                 autoComplete="off"
                 required
               />
-              {usernameError && touched.user_name && <div style={errorStyle}>{usernameError}</div>}
+              {usernameError && touched.user_name && <div style={{ color: 'red' }}>{usernameError}</div>}
             </div>
             <div style={formGroup}>
-              <label style={labelStyle}>Số điện thoại</label>
+              <label style={labelStyle}>SĐT</label>
               <input
                 name="phone"
                 value={formData.phone}
@@ -208,22 +226,24 @@ export default function UserManager() {
                 autoComplete="off"
                 required
               />
-              {phoneError && touched.phone && <div style={errorStyle}>{phoneError}</div>}
+              {phoneError && touched.phone && <div style={{ color: 'red' }}>{phoneError}</div>}
             </div>
-            <div style={formGroup}>
-              <label style={labelStyle}>Mật khẩu</label>
-              <input
-                name="user_password"
-                type="password"
-                value={formData.user_password ?? ""}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                style={inputStyle(!!(passwordError && touched.user_password))}
-                autoComplete="new-password"
-                required={!isEdit}
-              />
-              {passwordError && touched.user_password && <div style={errorStyle}>{passwordError}</div>}
-            </div>
+            {!isEdit && formData.role !== 'cntt' && (
+              <div style={formGroup}>
+                <label style={labelStyle}>Mật khẩu</label>
+                <input
+                  name="user_password"
+                  type="password"
+                  value={formData.user_password}
+                  onChange={handleInputChange}
+                  onBlur={handleBlur}
+                  style={inputStyle(!!(passwordError && touched.user_password))}
+                  autoComplete="off"
+                  required
+                />
+                {passwordError && touched.user_password && <div style={{ color: 'red' }}>{passwordError}</div>}
+              </div>
+            )}
             <div style={formGroup}>
               <label style={labelStyle}>Quyền</label>
               <select

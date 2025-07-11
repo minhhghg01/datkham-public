@@ -1,6 +1,7 @@
-const { PrismaClient } = require('../src/generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 const XLSX = require('xlsx');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -31,12 +32,47 @@ function findUniqueFromExcel(fileName: any, columnIndex: any) {
   }
 }
 
+async function hashAllPasswords() {
+  const users = await prisma.user.findMany();
+  for (const user of users) {
+    if (user.password && !user.password.startsWith('$2')) {
+      const hashed = bcrypt.hashSync(user.password, 10);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashed }
+      });
+      console.log(`Đã hash mật khẩu cho user: ${user.username}`);
+    }
+  }
+  console.log('Hoàn thành!');
+}
+
 async function main() {
   console.log('Xóa dữ liệu cũ...');
+  await prisma.user.deleteMany(); // Xoá toàn bộ user trước
   await prisma.country.deleteMany();
   await prisma.occupation.deleteMany();
   await prisma.ethnic.deleteMany();
   console.log('Đã xóa xong dữ liệu cũ. Bắt đầu seeding...');
+
+  // Seed user admin
+  const adminUsername = 'admin';
+  const adminPassword = bcrypt.hashSync('Admin@123', 10);
+  const adminRole = 'admin';
+  try {
+    const admin = await prisma.user.create({
+      data: {
+        username: adminUsername,
+        password: adminPassword,
+        role: adminRole,
+        name: 'Admin',
+        phone: '0123456789',
+      }
+    });
+    console.log('Đã seed user admin:', admin);
+  } catch (e) {
+    console.error('Lỗi khi seed user admin:', e);
+  }
 
   // Seed Country
   const countries = findUniqueFromExcel('QuocGia.xlsx', 4);
@@ -69,4 +105,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });

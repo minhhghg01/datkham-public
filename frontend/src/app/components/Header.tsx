@@ -4,6 +4,20 @@ import React from "react";
 
 export default function Header() {
   const [loggedIn, setLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setLoggedIn(!!localStorage.getItem('token'));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    setLoggedIn(false);
+    window.location.reload();
+  };
+
   return (
     <header style={headerStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -12,7 +26,7 @@ export default function Header() {
       <div style={{ fontWeight: 600, fontSize: 20 }}>Đặt lịch khám bệnh</div>
       <div>
         {loggedIn ? (
-          <button style={loginBtnStyle} onClick={() => setLoggedIn(false)}>Đăng xuất</button>
+          <button style={logoutBtnStyle} onClick={handleLogout}>Đăng xuất</button>
         ) : (
           <Link href="/login" style={loginBtnStyle}>Đăng nhập</Link>
         )}
@@ -57,3 +71,14 @@ const loginBtnStyle = {
   cursor: "pointer",
   textDecoration: "none",
 }; 
+const logoutBtnStyle = {
+  background: "#e74c3c",
+  color: "white",
+  border: "none",
+  borderRadius: 6,
+  padding: "8px 18px",
+  fontWeight: 600,
+  fontSize: 16,
+  cursor: "pointer",
+  textDecoration: "none",
+};

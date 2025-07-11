@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../generated/prisma';
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
@@ -8,6 +9,17 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
+
+function getUserFromRequest(req: NextRequest) {
+  const auth = req.headers.get("authorization");
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  const token = auth.split(" ")[1];
+  try {
+    return jwt.verify(token, "SECRET_KEY");
+  } catch {
+    return null;
+  }
+}
 
 /**
  * @swagger
@@ -92,6 +104,19 @@ export async function GET() {
  */
 // Tạo mới phòng khám
 export async function POST(req: NextRequest) {
+  const user = getUserFromRequest(req);
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Chưa đăng nhập" }), {
+      status: 401,
+      headers: CORS_HEADERS,
+    });
+  }
+  if (user.role !== "admin") {
+    return new Response(JSON.stringify({ error: "Không đủ quyền" }), {
+      status: 403,
+      headers: CORS_HEADERS,
+    });
+  }
   try {
     const { name } = await req.json();
     if (!name) {

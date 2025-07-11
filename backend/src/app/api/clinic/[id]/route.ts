@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../../generated/prisma';
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
+
+function getUserFromRequest(req: NextRequest) {
+  const auth = req.headers.get("authorization");
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  const token = auth.split(" ")[1];
+  try {
+    return jwt.verify(token, "SECRET_KEY");
+  } catch {
+    return null;
+  }
+}
 
 /**
  * @swagger
@@ -61,6 +73,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
  */
 // Cập nhật phòng khám
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const user = getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  if (user.role !== "admin") return NextResponse.json({ error: "Không đủ quyền" }, { status: 403 });
   const id = Number(params.id);
   const { name } = await req.json();
   try {
@@ -92,6 +107,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
  */
 // Xóa phòng khám
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const user = getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  if (user.role !== "admin") return NextResponse.json({ error: "Không đủ quyền" }, { status: 403 });
   const id = Number(params.id);
   try {
     await prisma.clinic.delete({ where: { id } });
