@@ -42,7 +42,6 @@ export default function BookingForm() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
   const [clinics, setClinics] = useState<{id: number, name: string}[]>([]);
-  const [otpCountdown, setOtpCountdown] = useState(0);
   const [nameError, setNameError] = useState("");
   const [dateOfBirthError, setDateOfBirthError] = useState("");
   const [genderError, setGenderError] = useState("");
@@ -64,7 +63,10 @@ export default function BookingForm() {
   const [occupationId, setOccupationId] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState("");
-
+  const [bookingInfo, setBookingInfo] = useState<{ clinicId: number; date: string; time: string; status: string } | null>(null);
+  const [bookedSlots, setBookedSlots] = useState<
+  { clinicId: number; date: string; time: string; status: string }[]
+>([]);
   const timeSlots = generateTimeSlots();
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -72,18 +74,24 @@ export default function BookingForm() {
   maxDate.setDate(today.getDate() + 6);
 
   useEffect(() => {
+    if (step === 2) {
+      fetch("http://localhost:4000/api/booking")
+        .then(res => res.json())
+        .then(data => {
+          console.log("All bookings:", data);
+          const filtered = data.filter((item: any) => item.status !== "deleted");
+          setBookedSlots(filtered);
+        })
+        .catch(err => console.error("Lỗi lấy danh sách booking:", err));
+    }
+  }, [step]);
+
+  useEffect(() => {
     fetch("http://localhost:4000/api/clinic")
       .then(res => res.json())
       .then(data => setClinics(data))
       .catch(err => console.error("Lỗi lấy danh sách phòng khám:", err));
   }, []);
-
-  useEffect(() => {
-    if (otpCountdown > 0) {
-      const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [otpCountdown]);
 
   useEffect(() => {
     if (!name.trim()) setNameError("Họ tên không được để trống");
@@ -167,6 +175,22 @@ export default function BookingForm() {
     }
   }, [step]);
 
+  const isSlotBooked = (slotTime: string): boolean => {
+    if (!selectedDate || !clinicRoom) return false;
+  
+    const selectedDateStr = selectedDate.toLocaleDateString("en-CA");
+    
+    return bookedSlots.some(slot => {
+      const slotDateStr = new Date(slot.date).toLocaleDateString("en-CA");
+      return (
+        Number(slot.clinicId) === Number(clinicRoom) &&
+        slotDateStr === selectedDateStr &&
+        slot.time === slotTime &&
+        slot.status !== "deleted"
+      );
+    });
+  };    
+
   const handleNext = () => {
     if (step === 1 && clinicRoom) setStep(2);
     else if (step === 2 && selectedDate && time) setStep(3);
@@ -228,6 +252,7 @@ export default function BookingForm() {
       setResult(result);
       setStep(4);
       setLoading(false);
+      setBookingInfo({ clinicId: result.booking.clinicId, date: result.booking.date, time: result.booking.time, status: result.booking.status });
     } catch (err: any) {
       console.error("Lỗi khi gọi API:", err);
       setError(err.message || "Lỗi đăng ký");
@@ -329,10 +354,10 @@ export default function BookingForm() {
   }
   const { morning, afternoon } = splitTimeSlots(timeSlots, minTime);
 
-  const isFormValid = name && phone && cccd && !nameError && !phoneError && !cccdError 
-    && countryId && ethnicId && occupationId  // Thêm validate cho các trường select
+  const isFormValid = Boolean(name && phone && cccd && !nameError && !phoneError && !cccdError 
+    && (countryId !== null) && (ethnicId !== null) && (occupationId !== null)  // Thêm validate cho các trường select
     && gender && dateOfBirth && address       // Thêm validate cho các trường còn lại
-    && !dateOfBirthError && !genderError && !addressError;
+    && !dateOfBirthError && !genderError && !addressError);
 
   // Thêm hàm format ngày sinh
   const formatDateOfBirth = (value: string) => {
@@ -423,6 +448,7 @@ export default function BookingForm() {
               outline: "none",
               boxShadow: "0 1px 4px #f0f0f0",
             }}
+            disabled={bookingInfo && bookingInfo.status !== "deleted"}
           >
             <option value="">-- Chọn phòng --</option>
             {clinics.map(clinic => (
@@ -446,7 +472,7 @@ export default function BookingForm() {
                 boxShadow: clinicRoom ? "0 2px 8px #b2f2dd" : "none",
                 transition: "all 0.2s",
               }}
-              disabled={!clinicRoom}
+              disabled={!clinicRoom || bookingInfo && bookingInfo.status !== "deleted"}
               onClick={handleNext}
             >
               Tiếp tục
@@ -559,57 +585,62 @@ export default function BookingForm() {
                   <div style={{ marginBottom: 24 }}>
                     <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, color: '#2ecc71', letterSpacing: 1, borderBottom: '2px solid #f0f0f0', paddingBottom: 8 }}>Buổi sáng</div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(75px, 1fr))', gap: 10 }}>
-                      {morning.map((t: string) => (
-                        <button
-                          key={t}
-                          onClick={() => setTime(t)}
-                          style={{
-                            padding: '8px 0',
-                            borderRadius: 8,
-                            border: time === t ? '2px solid #2ecc71' : '1.5px solid #e0e0e0',
-                            background: time === t ? '#2ecc71' : '#f8fafc',
-                            color: time === t ? '#fff' : '#222',
-                            fontWeight: 600,
-                            fontSize: 14,
-                            cursor: 'pointer',
-                            boxShadow: time === t ? '0 2px 8px #b2f2dd' : 'none',
-                            transition: 'all 0.2s',
-                            outline: 'none',
-                          }}
-                          onMouseOver={e => e.currentTarget.style.background = time === t ? '#2ecc71' : '#eafaf1'}
-                          onMouseOut={e => e.currentTarget.style.background = time === t ? '#2ecc71' : '#f8fafc'}
-                        >
-                          {t}
-                        </button>
-                      ))}
+                    {morning.map((t: string) => {
+  const disabled = isSlotBooked(t);
+  return (
+    <button
+      key={t}
+      onClick={() => !disabled && setTime(t)}
+      disabled={disabled}
+      style={{
+        padding: '8px 0',
+        borderRadius: 8,
+        border: time === t ? '2px solid #2ecc71' : '1.5px solid #e0e0e0',
+        background: disabled ? '#f0f0f0' : time === t ? '#2ecc71' : '#f8fafc',
+        color: disabled ? '#ccc' : time === t ? '#fff' : '#222',
+        fontWeight: 600,
+        fontSize: 14,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+        transition: 'all 0.2s',
+      }}
+    >
+      {t}
+    </button>
+  );
+})}
+
                     </div>
                   </div>
                   <div style={{ marginBottom: 24 }}>
                     <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, color: '#2ecc71', letterSpacing: 1, borderBottom: '2px solid #f0f0f0', paddingBottom: 8 }}>Buổi chiều</div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(75px, 1fr))', gap: 10 }}>
-                      {afternoon.map((t: string) => (
-                        <button
-                          key={t}
-                          onClick={() => setTime(t)}
-                          style={{
-                            padding: '8px 0',
-                            borderRadius: 8,
-                            border: time === t ? '2px solid #2ecc71' : '1.5px solid #e0e0e0',
-                            background: time === t ? '#2ecc71' : '#f8fafc',
-                            color: time === t ? '#fff' : '#222',
-                            fontWeight: 600,
-                            fontSize: 14,
-                            cursor: 'pointer',
-                            boxShadow: time === t ? '0 2px 8px #b2f2dd' : 'none',
-                            transition: 'all 0.2s',
-                            outline: 'none',
-                          }}
-                          onMouseOver={e => e.currentTarget.style.background = time === t ? '#2ecc71' : '#eafaf1'}
-                          onMouseOut={e => e.currentTarget.style.background = time === t ? '#2ecc71' : '#f8fafc'}
-                        >
-                          {t}
-                        </button>
-                      ))}
+                    {afternoon.map((t: string) => {
+  const disabled = isSlotBooked(t);
+  console.log("Slot", t, "disabled?", disabled);
+  return (
+    <button
+      key={t}
+      onClick={() => !disabled && setTime(t)}
+      disabled={disabled}
+      style={{
+        padding: '8px 0',
+        borderRadius: 8,
+        border: time === t ? '2px solid #2ecc71' : '1.5px solid #e0e0e0',
+        background: disabled ? '#f0f0f0' : time === t ? '#2ecc71' : '#f8fafc',
+        color: disabled ? '#ccc' : time === t ? '#fff' : '#222',
+        fontWeight: 600,
+        fontSize: 14,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+        transition: 'all 0.2s',
+      }}
+    >
+      {t}
+    </button>
+  );
+})}
+
                     </div>
                   </div>
                 </>
@@ -645,7 +676,7 @@ export default function BookingForm() {
                   boxShadow: selectedDate && time ? '0 2px 8px #b2f2dd' : 'none',
                   transition: 'all 0.2s',
                 }}
-                disabled={!selectedDate || !time || loading}
+                disabled={!selectedDate || !time || loading || bookingInfo && bookingInfo.status !== "deleted"}
                 onClick={handleNext}
               >
                 Tiếp tục
@@ -702,6 +733,7 @@ export default function BookingForm() {
                   outline: "none",
                   boxShadow: "0 1px 4px #f0f0f0",
                 }}
+                disabled={bookingInfo && bookingInfo.status !== "deleted"}
               />
               {(dateOfBirthTouched || submitClicked) && dateOfBirthError && <div style={{ color: 'red', marginBottom: 8 }}>{dateOfBirthError}</div>}
             </div>
@@ -727,6 +759,7 @@ export default function BookingForm() {
                   outline: "none",
                   boxShadow: "0 1px 4px #f0f0f0",
                 }}
+                disabled={bookingInfo && bookingInfo.status !== "deleted"}
               >
                 <option value="">-- Chọn --</option>
                 <option value="Nam">Nam</option>
@@ -756,6 +789,7 @@ export default function BookingForm() {
               outline: "none",
               boxShadow: "0 1px 4px #f0f0f0",
             }}
+            disabled={bookingInfo && bookingInfo.status !== "deleted"}
           />
           {(phoneTouched || submitClicked) && phoneError && <div style={{ color: 'red', marginBottom: 8 }}>{phoneError}</div>}
           <label style={{ fontWeight: 600, marginBottom: 10, display: "block", color: "#222" }}>
@@ -780,6 +814,7 @@ export default function BookingForm() {
               boxShadow: "0 1px 4px #f0f0f0",
             }}
             placeholder="Nhập 12 số CCCD"
+            disabled={bookingInfo && bookingInfo.status !== "deleted"}
           />
           {(cccdTouched || submitClicked) && cccdError && <div style={{ color: 'red', marginBottom: 8 }}>{cccdError}</div>}
           <label style={{ fontWeight: 600, marginBottom: 10, display: "block", color: "#222" }}>
@@ -803,6 +838,7 @@ export default function BookingForm() {
               boxShadow: "0 1px 4px #f0f0f0",
             }}
             placeholder="Ví dụ: Hà Nội-Cầu Giấy"
+            disabled={bookingInfo && bookingInfo.status !== "deleted"}
           />
           {(addressTouched || submitClicked) && addressError && <div style={{ color: 'red', marginBottom: 8 }}>{addressError}</div>}
 
@@ -827,6 +863,7 @@ export default function BookingForm() {
                   outline: "none",
                   boxShadow: "0 1px 4px #f0f0f0",
                 }}
+                disabled={bookingInfo && bookingInfo.status !== "deleted"}
               >
                 <option value="">-- Chọn --</option>
                 {countries.map(c => (
@@ -856,6 +893,7 @@ export default function BookingForm() {
                   outline: "none",
                   boxShadow: "0 1px 4px #f0f0f0",
                 }}
+                disabled={bookingInfo && bookingInfo.status !== "deleted"}
               >
                 <option value="">-- Chọn --</option>
                 {ethnics.map(e => (
@@ -888,6 +926,7 @@ export default function BookingForm() {
                 outline: "none",
                 boxShadow: "0 1px 4px #f0f0f0",
               }}
+              disabled={bookingInfo && bookingInfo.status !== "deleted"}
             >
               <option value="">-- Chọn nghề nghiệp --</option>
               {occupations.map(o => (
@@ -926,7 +965,7 @@ export default function BookingForm() {
                 boxShadow: isFormValid ? "0 2px 8px #b2f2dd" : "none",
                 transition: "all 0.2s",
               }}
-              disabled={!isFormValid}
+              disabled={!isFormValid || bookingInfo && bookingInfo.status !== "deleted"}
               onClick={handleSubmitForm}
             >
               Đăng ký
